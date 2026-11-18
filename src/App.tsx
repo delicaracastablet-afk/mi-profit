@@ -11,7 +11,7 @@ import { Asientos } from './pages/Asientos';
 import { Ventas } from './pages/Ventas';
 import { Compras } from './pages/Compras';
 import { Tesoreria } from './pages/Tesoreria';
-import { Productos } from './pages/Productos';
+import { Registros } from './pages/Registros';
 import { Empleados } from './pages/Empleados';
 import { Nomina } from './pages/Nomina';
 import { Reportes } from './pages/Reportes';
@@ -87,6 +87,8 @@ const SistemaContable = ({ empresa, onLogout }: { empresa: string; onLogout: () 
       lineas: { asientoId: { type: 'string' }, cuentaId: { type: 'string' }, debe: { type: 'number' }, haber: { type: 'number' } },
       ventas: { fecha: { type: 'string' }, rif: { type: 'string' }, numeroFactura: { type: 'string' }, baseImponible: { type: 'number' }, iva: { type: 'number' }, total: { type: 'number' } },
       compras: { fecha: { type: 'string' }, rif: { type: 'string' }, numeroFactura: { type: 'string' }, baseImponible: { type: 'number' }, iva: { type: 'number' }, total: { type: 'number' } },
+      clientes: { nombre: { type: 'string' }, rif: { type: 'string' }, telefono: { type: 'string' }, direccion: { type: 'string' } },
+      proveedores: { nombre: { type: 'string' }, rif: { type: 'string' }, telefono: { type: 'string' }, direccion: { type: 'string' } },
       productos: { codigo: { type: 'string' }, nombre: { type: 'string' }, costo: { type: 'number' }, precio: { type: 'number' }, stock: { type: 'number' } },
       empleados: { nombre: { type: 'string' }, cedula: { type: 'string' }, cargo: { type: 'string' }, sueldoBase: { type: 'number' } },
       nominas: { empleadoId: { type: 'string' }, fecha: { type: 'string' }, sueldo: { type: 'number' }, cestaticket: { type: 'number' }, deducciones: { type: 'number' }, neto: { type: 'number' } },
@@ -116,7 +118,7 @@ const SistemaContable = ({ empresa, onLogout }: { empresa: string; onLogout: () 
         {pestana === 'ventas' && <Ventas store={store} irAlibroFiscal={() => setPestana('libroFiscal')} />}
         {pestana === 'compras' && <Compras store={store} irAlibroCompras={() => setPestana('libroCompras')} />}
         {pestana === 'tesoreria' && <Tesoreria store={store} />}
-        {pestana === 'productos' && <Productos store={store} />} 
+        {pestana === 'registros' && <Registros store={store} />}
         {pestana === 'empleados' && <Empleados store={store} />}
         {pestana === 'nomina' && <Nomina store={store} irAlLibro={() => setPestana('libro')} />}
         {pestana === 'reportes' && <Reportes store={store} />}

@@ -12,8 +12,8 @@ export const Sidebar = ({ empresa, pestanaActiva, onCambiarPestana, onLogout }: 
     { id: 'reportes', label: '📊 Dashboard', grupo: 'Inicio' },
     { id: 'ventas', label: '🛒 Ventas', grupo: 'Operaciones' },
     { id: 'compras', label: '📦 Compras', grupo: 'Operaciones' },
-    { id: 'tesoreria', label: '🏦 Tesorería (Cobros/Pagos)', grupo: 'Operaciones' }, // <-- AQUÍ ESTÁ
-    { id: 'productos', label: '🏷️ Inventario', grupo: 'Operaciones' },
+    { id: 'tesoreria', label: '🏦 Tesorería (Cobros/Pagos)', grupo: 'Operaciones' },
+    { id: 'registros', label: '🗂️ Registros (Clientes/Proveedores)', grupo: 'Operaciones' },
     { id: 'empleados', label: '👥 Empleados', grupo: 'Nómina' },
     { id: 'nomina', label: '💵 Procesar Nómina', grupo: 'Nómina' },
     { id: 'catalogo', label: '📚 Catálogo de Cuentas', grupo: 'Contabilidad' },

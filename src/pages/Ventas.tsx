@@ -4,12 +4,13 @@ import { generarFacturaPDF } from '../utils/generarPdf';
 
 export const Ventas = ({ store, irAlibroFiscal }: { store: any, irAlibroFiscal: () => void }) => {
   const [fechaVenta, setFechaVenta] = useState(new Date().toISOString().split('T')[0]);
-  const [rifCliente, setRifCliente] = useState('V-12345678');
+  const [rifCliente, setRifCliente] = useState(''); // Iniciamos vacío para forzar la selección
   const [numFacturaVenta, setNumFacturaVenta] = useState('');
   const [productoId, setProductoId] = useState('');
   const [cantidad, setCantidad] = useState(1);
 
   const productosIds = useRowIds('productos', store);
+  const clientesIds = useRowIds('clientes', store); // Traemos los clientes
   
   // Obtenemos los datos del producto seleccionado
   const prodSeleccionado = productoId ? store.getRow('productos', productoId) : null;
@@ -23,7 +24,7 @@ export const Ventas = ({ store, irAlibroFiscal }: { store: any, irAlibroFiscal: 
   const costoTotalVenta = costoUnitario * cantidad;
 
   const registrarVenta = () => {
-    if (montoVenta <= 0 || !numFacturaVenta || !productoId) return alert("Complete los datos.");
+    if (montoVenta <= 0 || !numFacturaVenta || !productoId || !rifCliente) return alert("Complete todos los datos, incluyendo el cliente.");
     if (cantidad > stockActual) return alert(`No hay suficiente stock. Solo quedan ${stockActual} unidades.`);
 
     const buscarOCrearCuenta = (cod: string, nom: string, tip: string) => {
@@ -56,20 +57,27 @@ export const Ventas = ({ store, irAlibroFiscal }: { store: any, irAlibroFiscal: 
     // 4. Restar el stock
     store.setCell('productos', productoId, 'stock', stockActual - cantidad);
 
-    // 5. Limpiar
-    setCantidad(1); setNumFacturaVenta(''); setProductoId('');
-    // Generar el PDF de la factura
-generarFacturaPDF(
-  numFacturaVenta, 
-  rifCliente, 
-  fechaVenta, 
-  prodSeleccionado.nombre, 
-  cantidad, 
-  precioUnitario, 
-  montoVenta, 
-  ivaCalculadoVenta, 
-  totalFacturaVenta
-);
+    // 5. Generar el PDF de la factura
+    if (prodSeleccionado) {
+      generarFacturaPDF(
+        numFacturaVenta, 
+        rifCliente, 
+        fechaVenta, 
+        prodSeleccionado.nombre, 
+        cantidad, 
+        precioUnitario, 
+        montoVenta, 
+        ivaCalculadoVenta, 
+        totalFacturaVenta
+      );
+    }
+
+    // 6. Limpiar formulario y avisar
+    setCantidad(1); 
+    setNumFacturaVenta(''); 
+    setProductoId(''); 
+    setRifCliente('');
+    
     alert("Venta registrada y stock actualizado.");
     irAlibroFiscal();
   };
@@ -78,10 +86,25 @@ generarFacturaPDF(
     <div>
       <h2>Registro de Ventas</h2>
       <div style={{ backgroundColor: '#2a2a2a', padding: '30px', borderRadius: '8px', maxWidth: '600px' }}>
+        
         <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-          <div style={{ flex: 1 }}><label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Fecha</label><input type="date" value={fechaVenta} onChange={(e) => setFechaVenta(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }} /></div>
-          <div style={{ flex: 1 }}><label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>RIF Cliente</label><input value={rifCliente} onChange={(e) => setRifCliente(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }} /></div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Fecha</label>
+            <input type="date" value={fechaVenta} onChange={(e) => setFechaVenta(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }} />
+          </div>
+          
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Cliente</label>
+            <select value={rifCliente} onChange={(e) => setRifCliente(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}>
+              <option value="">Seleccione un cliente...</option>
+              {clientesIds.map((id: string) => {
+                const cliente = store.getRow('clientes', id);
+                return <option key={id} value={cliente.rif}>{cliente.nombre} ({cliente.rif})</option>
+              })}
+            </select>
+          </div>
         </div>
+
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Nro. Factura</label>
           <input placeholder="Ej. 00001" value={numFacturaVenta} onChange={(e) => setNumFacturaVenta(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }} />
@@ -112,7 +135,7 @@ generarFacturaPDF(
           </div>
         )}
 
-        <button onClick={registrarVenta} disabled={montoVenta <= 0 || !numFacturaVenta || !productoId} style={{ backgroundColor: (montoVenta > 0 && numFacturaVenta) ? '#10b981' : '#555', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '4px', fontWeight: 'bold', width: '100%' }}>Registrar Venta</button>
+        <button onClick={registrarVenta} disabled={montoVenta <= 0 || !numFacturaVenta || !productoId || !rifCliente} style={{ backgroundColor: (montoVenta > 0 && numFacturaVenta && productoId && rifCliente) ? '#10b981' : '#555', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '4px', fontWeight: 'bold', width: '100%' }}>Registrar Venta</button>
       </div>
     </div>
   );
