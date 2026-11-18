@@ -100,9 +100,9 @@ const SistemaContable = ({ empresa, onLogout }: { empresa: string; onLogout: () 
     await p.startAutoSave();
   });
 
-  useCreatePersister(store, (s) => createWsSynchronizer(s, new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:8080/mi-profit-sync')), [], async (synchronizer) => {
-  await synchronizer.startSync();
-});
+  useCreatePersister(store, (s: any) => createWsSynchronizer(s, new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:8080/mi-profit-sync')), [], async (synchronizer: any) => {
+    await synchronizer.startSync();
+  });
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#111', color: 'white', fontFamily: 'Arial, sans-serif' }}>
       <Sidebar 

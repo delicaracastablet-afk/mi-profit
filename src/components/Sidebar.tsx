@@ -1,4 +1,4 @@
-export type Pestana = 'catalogo' | 'asientos' | 'libro' | 'ventas' | 'libroFiscal' | 'compras' | 'libroCompras' | 'empleados' | 'nomina' | 'reportes' | 'productos' | 'tesoreria';
+export type Pestana = 'catalogo' | 'asientos' | 'libro' | 'ventas' | 'libroFiscal' | 'compras' | 'libroCompras' | 'empleados' | 'nomina' | 'reportes' | 'productos' | 'tesoreria' | 'registros' | 'bancos';
 
 interface SidebarProps {
   empresa: string;
