@@ -1,12 +1,12 @@
 import { useRowIds } from 'tinybase/ui-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export const Reportes = ({ store }: { store: any }) => {
   const lineasIds = useRowIds('lineas', store);
   const productosIds = useRowIds('productos', store);
   const ventasIds = useRowIds('ventas', store);
 
-  // --- 1. CÁLCULOS FINANCIEROS ---
+  // --- CÁLCULOS FINANCIEROS ---
   const calcularTotalesPorTipo = (tipoCuenta: string) => {
     let total = 0;
     lineasIds.forEach((lid: string) => {
@@ -30,8 +30,7 @@ export const Reportes = ({ store }: { store: any }) => {
   const utilidad = totalIngresos - totalGastos;
   const totalActivos = calcularTotalesPorTipo('Activo');
 
-  // --- 2. DATOS PARA EL GRÁFICO DE VENTAS ---
-  // Agrupamos las ventas por fecha
+  // --- DATOS PARA EL GRÁFICO ---
   const ventasPorFecha = ventasIds.reduce((acc: any, id: string) => {
     const fecha = store.getCell('ventas', id, 'fecha');
     const total = Number(store.getCell('ventas', id, 'total'));
@@ -43,9 +42,9 @@ export const Reportes = ({ store }: { store: any }) => {
   const datosGrafico = Object.keys(ventasPorFecha)
     .map(fecha => ({ fecha, total: ventasPorFecha[fecha] }))
     .sort((a, b) => a.fecha.localeCompare(b.fecha))
-    .slice(-7); // Solo mostramos los últimos 7 días
+    .slice(-7);
 
-  // --- 3. PRODUCTOS CON BAJO STOCK ---
+  // --- PRODUCTOS CON BAJO STOCK ---
   const productosBajoStock = productosIds
     .map((id: string) => ({
       nombre: store.getCell('productos', id, 'nombre'),
@@ -53,46 +52,69 @@ export const Reportes = ({ store }: { store: any }) => {
     }))
     .filter((p: any) => p.stock <= 5);
 
-  return (
-    <div>
-      <h2 style={{ marginBottom: '20px' }}>Dashboard Financiero</h2>
+  // Formateador de moneda
+  const fmt = (n: number) => n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-      {/* TARJETAS DE RESUMEN */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-        <div style={{ backgroundColor: '#2a2a2a', padding: '20px', borderRadius: '8px', borderLeft: '5px solid #10b981' }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#aaa', fontSize: '14px' }}>Ingresos Totales</h3>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#10b981' }}>{totalIngresos.toFixed(2)}</div>
-        </div>
-        <div style={{ backgroundColor: '#2a2a2a', padding: '20px', borderRadius: '8px', borderLeft: '5px solid #f43f5e' }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#aaa', fontSize: '14px' }}>Gastos Totales</h3>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f43f5e' }}>{totalGastos.toFixed(2)}</div>
-        </div>
-        <div style={{ backgroundColor: '#2a2a2a', padding: '20px', borderRadius: '8px', borderLeft: `5px solid ${utilidad >= 0 ? '#0ea5e9' : '#f43f5e'}` }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#aaa', fontSize: '14px' }}>Utilidad del Ejercicio</h3>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: utilidad >= 0 ? '#0ea5e9' : '#f43f5e' }}>{utilidad.toFixed(2)}</div>
-        </div>
-        <div style={{ backgroundColor: '#2a2a2a', padding: '20px', borderRadius: '8px', borderLeft: '5px solid #eab308' }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#aaa', fontSize: '14px' }}>Efectivo / Activos</h3>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#eab308' }}>{totalActivos.toFixed(2)}</div>
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-3xl font-bold text-white">Dashboard Financiero</h2>
+          <p className="text-gray-400 text-sm mt-1">Resumen en tiempo real de tu empresa.</p>
         </div>
       </div>
 
-      {/* SECCIÓN DE GRÁFICOS Y ALERTAS */}
-      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+      {/* TARJETAS DE RESUMEN */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+          <p className="text-gray-400 text-sm font-medium">Ingresos Totales</p>
+          <p className="text-3xl font-bold text-green-400 mt-2">${fmt(totalIngresos)}</p>
+        </div>
+
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+          <p className="text-gray-400 text-sm font-medium">Gastos Totales</p>
+          <p className="text-3xl font-bold text-red-400 mt-2">${fmt(totalGastos)}</p>
+        </div>
+
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg relative overflow-hidden">
+          <div className={`absolute top-0 left-0 w-1 h-full ${utilidad >= 0 ? 'bg-blue-500' : 'bg-red-500'}`}></div>
+          <p className="text-gray-400 text-sm font-medium">Utilidad del Ejercicio</p>
+          <p className={`text-3xl font-bold mt-2 ${utilidad >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+            ${fmt(utilidad)}
+          </p>
+        </div>
+
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-yellow-500"></div>
+          <p className="text-gray-400 text-sm font-medium">Efectivo / Activos</p>
+          <p className="text-3xl font-bold text-yellow-400 mt-2">${fmt(totalActivos)}</p>
+        </div>
+      </div>
+
+      {/* GRÁFICOS Y ALERTAS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         
         {/* GRÁFICO DE VENTAS */}
-        <div style={{ flex: 2, minWidth: '400px', backgroundColor: '#2a2a2a', padding: '20px', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '16px' }}>Ventas de los últimos días</h3>
+        <div className="lg:col-span-2 bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
+          <h3 className="text-lg font-semibold text-white mb-4">📈 Ventas Recientes</h3>
           {datosGrafico.length === 0 ? (
-            <p style={{ color: '#888' }}>No hay ventas registradas para graficar.</p>
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              No hay ventas registradas para graficar.
+            </div>
           ) : (
-            <div style={{ height: '300px' }}>
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={datosGrafico}>
-                  <XAxis dataKey="fecha" stroke="#888" fontSize={12} />
-                  <YAxis stroke="#888" fontSize={12} />
-                  <Tooltip cursor={{ fill: '#333' }} contentStyle={{ backgroundColor: '#1f1f1f', border: '1px solid #444', borderRadius: '8px' }} />
-                  <Bar dataKey="total" fill="#0ea5e9" radius={[4, 4, 0, 0]} name="Total Ventas" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+                  <XAxis dataKey="fecha" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                  <Tooltip 
+                    cursor={{ fill: '#374151' }} 
+                    contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px', color: '#fff' }} 
+                  />
+                  <Bar dataKey="total" fill="#3B82F6" radius={[4, 4, 0, 0]} name="Total Ventas" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -100,16 +122,19 @@ export const Reportes = ({ store }: { store: any }) => {
         </div>
 
         {/* ALERTAS DE INVENTARIO */}
-        <div style={{ flex: 1, minWidth: '250px', backgroundColor: '#2a2a2a', padding: '20px', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', color: '#f43f5e' }}>⚠️ Alerta de Inventario</h3>
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
+          <h3 className="text-lg font-semibold text-white mb-4">⚠️ Alerta de Inventario</h3>
           {productosBajoStock.length === 0 ? (
-            <p style={{ color: '#10b981', fontSize: '14px' }}>Todo el inventario está saludable.</p>
+            <div className="h-64 flex flex-col items-center justify-center text-green-400">
+              <span className="text-4xl mb-2">✓</span>
+              <p className="text-sm">Todo el inventario está saludable.</p>
+            </div>
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            <ul className="space-y-3">
               {productosBajoStock.map((p, i) => (
-                <li key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #444', fontSize: '14px' }}>
-                  <span>{p.nombre}</span>
-                  <span style={{ color: '#f43f5e', fontWeight: 'bold' }}>{p.stock} uds</span>
+                <li key={i} className="flex justify-between items-center bg-gray-900 p-3 rounded-lg border border-gray-700">
+                  <span className="text-gray-300 text-sm font-medium truncate">{p.nombre}</span>
+                  <span className="text-red-400 text-xs font-bold bg-red-500/10 px-2 py-1 rounded">{p.stock} uds</span>
                 </li>
               ))}
             </ul>

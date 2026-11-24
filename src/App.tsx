@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import './index.css'; 
+import { useState, useEffect } from 'react';
 import { createStore } from 'tinybase';
 import { createLocalPersister } from 'tinybase/persisters/persister-browser';
 import { useCreateStore, useCreatePersister } from 'tinybase/ui-react';
@@ -9,12 +10,19 @@ import { Sidebar, Pestana } from './components/Sidebar';
 import { Catalogo } from './pages/Catalogo';
 import { Asientos } from './pages/Asientos';
 import { Ventas } from './pages/Ventas';
+import { Pedidos } from './pages/Pedidos';
+import { NotasEntrega } from './pages/NotasEntrega';
 import { Compras } from './pages/Compras';
+import { Almacenes } from './pages/Almacenes';
+import { Inventario } from './pages/Inventario';
+import { Transferencias } from './pages/Transferencias';
+import { Devoluciones } from './pages/Devoluciones';
 import { Tesoreria } from './pages/Tesoreria';
 import { Registros } from './pages/Registros';
 import { Empleados } from './pages/Empleados';
 import { Nomina } from './pages/Nomina';
 import { Reportes } from './pages/Reportes';
+import { ReportesPdf } from './pages/ReportesPdf';
 import { LibroDiario } from './pages/LibroDiario';
 import { LibrosFiscales } from './pages/LibrosFiscales';
 
@@ -23,7 +31,6 @@ const Login = ({ onLogin }: { onLogin: (empresa: string) => void }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // AQUÍ DEFINES TU CONTRASEÑA MAESTRA
   const CLAVE_MAESTRA = "admin123"; 
 
   const handleLogin = () => {
@@ -37,16 +44,18 @@ const Login = ({ onLogin }: { onLogin: (empresa: string) => void }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#111', color: 'white' }}>
-      <h1 style={{ color: '#0ea5e9', marginBottom: '10px' }}>Profit Clone</h1>
-      <p style={{ color: '#888', marginBottom: '30px' }}>Acceso al Sistema Administrativo</p>
+    <div className="flex flex-col items-center justify-center h-screen bg-gray-950 text-white">
+      {/* LOGO Y NOMBRE DE LA EMPRESA */}
+      <img src="/logo.png" alt="Logo" className="w-48 mb-6" />
+      <h1 className="text-2xl font-bold text-blue-500 mb-2 text-center px-4">DISTRIBUIDORA NAPOLES 2026 C.A.</h1>
+      <p className="text-gray-400 mb-8">Acceso al Sistema Administrativo</p>
       
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '300px' }}>
+      <div className="flex flex-col gap-4 w-80">
         <input 
           placeholder="Nombre de la Empresa" 
           value={empresa} 
           onChange={(e) => { setEmpresa(e.target.value); setError(''); }} 
-          style={{ padding: '12px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }} 
+          className="px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:border-blue-500 transition-colors"
         />
         
         <input 
@@ -55,14 +64,14 @@ const Login = ({ onLogin }: { onLogin: (empresa: string) => void }) => {
           value={password} 
           onChange={(e) => { setPassword(e.target.value); setError(''); }} 
           onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-          style={{ padding: '12px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }} 
+          className="px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:border-blue-500 transition-colors"
         />
 
-        {error && <p style={{ color: '#f43f5e', fontSize: '12px', margin: 0 }}>{error}</p>}
+        {error && <p className="text-red-500 text-sm m-0">{error}</p>}
 
         <button 
           onClick={handleLogin} 
-          style={{ backgroundColor: '#0ea5e9', color: 'white', border: 'none', padding: '12px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}
+          className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg transition-colors mt-2"
         >
           Entrar al Sistema
         </button>
@@ -79,21 +88,102 @@ const App = () => {
 
 const SistemaContable = ({ empresa, onLogout }: { empresa: string; onLogout: () => void }) => {
   const [pestana, setPestana] = useState<Pestana>('reportes');
+  const [tasaGlobal, setTasaGlobal] = useState(36.50);
 
   const store = useCreateStore(() =>
     createStore().setTablesSchema({
       cuentas: { codigo: { type: 'string' }, nombre: { type: 'string' }, tipo: { type: 'string' } },
       asientos: { fecha: { type: 'string' }, descripcion: { type: 'string' } },
       lineas: { asientoId: { type: 'string' }, cuentaId: { type: 'string' }, debe: { type: 'number' }, haber: { type: 'number' } },
-      ventas: { fecha: { type: 'string' }, rif: { type: 'string' }, numeroFactura: { type: 'string' }, baseImponible: { type: 'number' }, iva: { type: 'number' }, total: { type: 'number' } },
-      compras: { fecha: { type: 'string' }, rif: { type: 'string' }, numeroFactura: { type: 'string' }, baseImponible: { type: 'number' }, iva: { type: 'number' }, total: { type: 'number' } },
+      ventas: { 
+        fecha: { type: 'string' }, 
+        rif: { type: 'string' }, 
+        numeroFactura: { type: 'string' }, 
+        baseImponible: { type: 'number' }, 
+        iva: { type: 'number' }, 
+        total: { type: 'number' },
+        condicion: { type: 'string' },
+        vencimiento: { type: 'string' },
+        contenido: { type: 'string' },
+        tasaBCV: { type: 'number' }
+      },
+      pedidos: { 
+        fecha: { type: 'string' }, 
+        vendedor: { type: 'string' }, 
+        rifCliente: { type: 'string' }, 
+        nombreCliente: { type: 'string' }, 
+        telefonoCliente: { type: 'string' }, 
+        codigoSunagro: { type: 'string' }, 
+        horarioRecepcion: { type: 'string' }, 
+        contenido: { type: 'string' },
+        observaciones: { type: 'string' }, 
+        monedaPago: { type: 'string' }, 
+        condicionPago: { type: 'string' } 
+      },
+      compras: { 
+        fecha: { type: 'string' }, 
+        rif: { type: 'string' }, 
+        numeroFactura: { type: 'string' }, 
+        baseImponible: { type: 'number' }, 
+        iva: { type: 'number' }, 
+        total: { type: 'number' },
+        condicion: { type: 'string' },
+        vencimiento: { type: 'string' },
+        tasaBCV: { type: 'number' }
+      },
+      notas_entrega: { 
+        fecha: { type: 'string' }, 
+        rifCliente: { type: 'string' }, 
+        nombreCliente: { type: 'string' }, 
+        contenido: { type: 'string' }, 
+        observaciones: { type: 'string' },
+        tasaBCV: { type: 'number' }
+      },
+      configuracion: { 
+        tasaBCV: { type: 'number' } 
+      },
+      historial_tasas: { 
+        fecha: { type: 'string' }, 
+        tasa: { type: 'number' } 
+      },
+      almacenes: { nombre: { type: 'string' }, ubicacion: { type: 'string' } },
+      transferencias: { fecha: { type: 'string' }, origen: { type: 'string' }, destino: { type: 'string' }, producto: { type: 'string' }, cantidad: { type: 'number' } },
       clientes: { nombre: { type: 'string' }, rif: { type: 'string' }, telefono: { type: 'string' }, direccion: { type: 'string' } },
       proveedores: { nombre: { type: 'string' }, rif: { type: 'string' }, telefono: { type: 'string' }, direccion: { type: 'string' } },
-      productos: { codigo: { type: 'string' }, nombre: { type: 'string' }, costo: { type: 'number' }, precio: { type: 'number' }, stock: { type: 'number' } },
+      productos: { 
+        codigo: { type: 'string' }, 
+        nombre: { type: 'string' }, 
+        costo: { type: 'number' }, 
+        precio: { type: 'number' }, 
+        stock: { type: 'number' },
+        almacenId: { type: 'string' }
+      },
       empleados: { nombre: { type: 'string' }, cedula: { type: 'string' }, cargo: { type: 'string' }, sueldoBase: { type: 'number' } },
       nominas: { empleadoId: { type: 'string' }, fecha: { type: 'string' }, sueldo: { type: 'number' }, cestaticket: { type: 'number' }, deducciones: { type: 'number' }, neto: { type: 'number' } },
     })
   );
+
+  useEffect(() => {
+    const tasaGuardada = store.getCell('configuracion', 'tasa', 'tasaBCV');
+    if (tasaGuardada) {
+      setTasaGlobal(Number(tasaGuardada));
+    }
+  }, [store]);
+
+  const handleCambiarTasa = (nuevaTasa: number) => {
+    setTasaGlobal(nuevaTasa);
+    store.setCell('configuracion', 'tasa', 'tasaBCV', nuevaTasa);
+
+    const fechaHoy = new Date().toISOString().split('T')[0];
+    const historialIds = store.getRowIds('historial_tasas');
+    const registroExistente = historialIds.find(id => store.getCell('historial_tasas', id, 'fecha') === fechaHoy);
+
+    if (registroExistente) {
+      store.setCell('historial_tasas', registroExistente, 'tasa', nuevaTasa);
+    } else {
+      store.addRow('historial_tasas', { fecha: fechaHoy, tasa: nuevaTasa });
+    }
+  };
 
   useCreatePersister(store, (s) => createLocalPersister(s, `mi-profit/${empresa}`), [empresa], async (p) => {
     await p.startAutoLoad();
@@ -103,25 +193,35 @@ const SistemaContable = ({ empresa, onLogout }: { empresa: string; onLogout: () 
   useCreatePersister(store, (s: any) => createWsSynchronizer(s, new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:8080/mi-profit-sync')), [], async (synchronizer: any) => {
     await synchronizer.startSync();
   });
+
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#111', color: 'white', fontFamily: 'Arial, sans-serif' }}>
+    <div className="flex h-screen bg-gray-950 text-gray-100 font-sans">
       <Sidebar 
         empresa={empresa} 
         pestanaActiva={pestana} 
         onCambiarPestana={setPestana} 
         onLogout={onLogout} 
+        tasaGlobal={tasaGlobal} 
+        onCambiarTasa={handleCambiarTasa}
       />
       
-      <div style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+      <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
         {pestana === 'catalogo' && <Catalogo store={store} />}
         {pestana === 'asientos' && <Asientos store={store} irAlLibro={() => setPestana('libro')} />}
-        {pestana === 'ventas' && <Ventas store={store} irAlibroFiscal={() => setPestana('libroFiscal')} />}
+        {pestana === 'ventas' && <Ventas store={store} tasaGlobal={tasaGlobal} irAlibroFiscal={() => setPestana('libroFiscal')} />}
+        {pestana === 'pedidos' && <Pedidos store={store} />} 
+        {pestana === 'notasEntrega' && <NotasEntrega store={store} tasaGlobal={tasaGlobal} />} 
         {pestana === 'compras' && <Compras store={store} irAlibroCompras={() => setPestana('libroCompras')} />}
+        {pestana === 'almacenes' && <Almacenes store={store} />}
+        {pestana === 'inventario' && <Inventario store={store} />}
+        {pestana === 'transferencias' && <Transferencias store={store} />}  
         {pestana === 'tesoreria' && <Tesoreria store={store} />}
         {pestana === 'registros' && <Registros store={store} />}
+        {pestana === 'devoluciones' && <Devoluciones store={store} irAlLibro={() => setPestana('libro')} />}
         {pestana === 'empleados' && <Empleados store={store} />}
         {pestana === 'nomina' && <Nomina store={store} irAlLibro={() => setPestana('libro')} />}
         {pestana === 'reportes' && <Reportes store={store} />}
+        {pestana === 'reportesPdf' && <ReportesPdf store={store} />}
         {pestana === 'libro' && <LibroDiario store={store} />}
         {(pestana === 'libroFiscal' || pestana === 'libroCompras') && <LibrosFiscales store={store} />}
       </div>
