@@ -114,7 +114,7 @@ export const generarFacturaPDF = (
   doc.save(`Factura_${numeroFactura}.pdf`);
 };
 
-// --- FUNCIÓN PARA NOTAS DE ENTREGA (SIN IVA) ---
+// --- FUNCIÓN PARA NOTAS DE ENTREGA ---
 export const generarNotaEntregaPDF = (
   numeroNota: string,
   rifCliente: string,
@@ -151,7 +151,7 @@ export const generarNotaEntregaPDF = (
 
   doc.line(14, 45, 196, 45);
 
-  // 3. TABLA DE PRODUCTOS (Igual que la factura)
+  // 3. TABLA DE PRODUCTOS (Extrae los datos reales del carrito)
   const filasProductos = carrito.map(item => {
     const cantidad = Number(item.cantidad) || 0;
     const precio = Number(item.precio) || 0;
@@ -180,8 +180,8 @@ export const generarNotaEntregaPDF = (
     }
   });
 
-  // 4. TOTALES (SOLO EL TOTAL, SIN BASE IMPONIBLE NI IVA)
-  const finalY = (doc as any).lastAutoTable.finalY + 15; // Un poco más de espacio
+  // 4. TOTALES
+  const finalY = (doc as any).lastAutoTable.finalY + 10;
   const totalVES = totalUSD * tasaBCV;
 
   doc.setFontSize(11);
