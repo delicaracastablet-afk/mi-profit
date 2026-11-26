@@ -114,13 +114,13 @@ export const generarFacturaPDF = (
   doc.save(`Factura_${numeroFactura}.pdf`);
 };
 
-// --- FUNCIÓN PARA NOTAS DE ENTREGA (ACTUALIZADA) ---
+// --- FUNCIÓN PARA NOTAS DE ENTREGA (SIN IVA) ---
 export const generarNotaEntregaPDF = (
   numeroNota: string,
   rifCliente: string,
   nombreCliente: string,
   fecha: string,
-  carrito: any[], // <-- AHORA RECIBE EL CARRITO COMPLETO, NO TEXTO
+  carrito: any[], 
   totalUSD: number,
   tasaBCV: number 
 ) => {
@@ -151,7 +151,7 @@ export const generarNotaEntregaPDF = (
 
   doc.line(14, 45, 196, 45);
 
-  // 3. TABLA DE PRODUCTOS (AQUÍ SE ARREGLA EL NaN)
+  // 3. TABLA DE PRODUCTOS (Igual que la factura)
   const filasProductos = carrito.map(item => {
     const cantidad = Number(item.cantidad) || 0;
     const precio = Number(item.precio) || 0;
@@ -180,8 +180,8 @@ export const generarNotaEntregaPDF = (
     }
   });
 
-  // 4. TOTALES
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  // 4. TOTALES (SOLO EL TOTAL, SIN BASE IMPONIBLE NI IVA)
+  const finalY = (doc as any).lastAutoTable.finalY + 15; // Un poco más de espacio
   const totalVES = totalUSD * tasaBCV;
 
   doc.setFontSize(11);
@@ -194,11 +194,11 @@ export const generarNotaEntregaPDF = (
   doc.text(`TOTAL A ENTREGAR:`, xEtiqueta, finalY);
   doc.text(`$${formatoMoneda(totalUSD)}`, xUSD, finalY, { align: 'right' });
   
-  doc.setTextColor(16, 185, 129);
+  doc.setTextColor(16, 185, 129); // Verde
   doc.text(`Bs. ${formatoMoneda(totalVES)}`, xVES, finalY, { align: 'right' });
-  doc.setTextColor(0, 0, 0);
+  doc.setTextColor(0, 0, 0); // Volver a negro
 
-  // 5. PIE
+  // 5. PIE DE PÁGINA
   doc.setFontSize(8);
   doc.setFont("helvetica", "italic");
   doc.text("Este documento NO es una factura fiscal. No genera IVA ni crédito fiscal.", 14, 280);
