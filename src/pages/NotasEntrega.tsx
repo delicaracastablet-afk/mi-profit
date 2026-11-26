@@ -48,20 +48,23 @@ export const NotasEntrega = ({ store, tasaGlobal }: { store: any, tasaGlobal: nu
   const generarNotaEntrega = () => {
     if (!rifCliente || carrito.length === 0) return alert("Seleccione un cliente y añada productos.");
 
+    // 1. Calculamos el total sumando los precios reales
     const totalUSD = carrito.reduce((acc, item) => acc + (Number(item.precio) * Number(item.cantidad)), 0);
     const numeroNota = `NE-${Date.now().toString().slice(-6)}`;
 
+    // 2. Guardamos en la base de datos
     store.addRow('notas_entrega', { fecha, rifCliente, nombreCliente, contenido: JSON.stringify(carrito), observaciones });
 
+    // 3. Descontamos el stock
     carrito.forEach(item => {
       const stockActual = Number(store.getCell('productos', item.productoId, 'stock')) || 0;
       store.setCell('productos', item.productoId, 'stock', stockActual - item.cantidad);
     });
 
-    // 👇 ESTA ES LA LÍNEA CLAVE. Debe pasar "carrito", NO "textoProductos"
+    // 4. Enviamos el CARRITO COMPLETO (no texto) al PDF
     generarNotaEntregaPDF(numeroNota, rifCliente, nombreCliente, fecha, carrito, totalUSD, tasaGlobal);
 
-    alert("Nota de Entrega generada. El stock ha sido descontado y el PDF se ha descargado.");
+    alert("Nota de Entrega generada con éxito.");
     setRifCliente(''); setNombreCliente(''); setCarrito([]); setObservaciones('');
   };
 
