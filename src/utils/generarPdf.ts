@@ -114,13 +114,13 @@ export const generarFacturaPDF = (
   doc.save(`Factura_${numeroFactura}.pdf`);
 };
 
-// --- FUNCIÓN PARA NOTAS DE ENTREGA ---
+// --- FUNCIÓN PARA NOTAS DE ENTREGA (ACTUALIZADA) ---
 export const generarNotaEntregaPDF = (
   numeroNota: string,
   rifCliente: string,
   nombreCliente: string,
   fecha: string,
-  productosTexto: string,
+  carrito: any[], // <-- AHORA RECIBE EL CARRITO COMPLETO, NO TEXTO
   totalUSD: number,
   tasaBCV: number 
 ) => {
@@ -151,14 +151,18 @@ export const generarNotaEntregaPDF = (
 
   doc.line(14, 45, 196, 45);
 
-  // 3. TABLA DE PRODUCTOS
-  const filasProductos = productosTexto.split(', ').map(item => {
-    const partes = item.split(' x ');
-    const cant = partes[0] || '0';
-    const nombre = partes[1] || item;
-    const precio = Number(partes[2]) || 0;
-    const totalFila = Number(cant) * precio;
-    return [cant, nombre, `$${formatoMoneda(precio)}`, `$${formatoMoneda(totalFila)}`];
+  // 3. TABLA DE PRODUCTOS (AQUÍ SE ARREGLA EL NaN)
+  const filasProductos = carrito.map(item => {
+    const cantidad = Number(item.cantidad) || 0;
+    const precio = Number(item.precio) || 0;
+    const totalFila = cantidad * precio;
+    
+    return [
+      cantidad.toString(), 
+      item.nombre, 
+      `$${formatoMoneda(precio)}`, 
+      `$${formatoMoneda(totalFila)}`
+    ];
   });
 
   autoTable(doc, {

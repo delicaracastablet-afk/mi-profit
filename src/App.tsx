@@ -1,8 +1,8 @@
 import './index.css'; 
 import { useState, useEffect } from 'react';
-import { createStore } from 'tinybase';
+import { createMergeableStore } from 'tinybase'; // <-- CAMBIO 1: Store fusionable
 import { createLocalPersister } from 'tinybase/persisters/persister-browser';
-import { useCreateStore, useCreatePersister } from 'tinybase/ui-react';
+import { useCreateStore, useCreatePersister, useCreateSynchronizer } from 'tinybase/ui-react'; // <-- NUEVO HOOK
 import { createWsSynchronizer } from 'tinybase/synchronizers/synchronizer-ws-client';
 
 // Importamos el menú y las páginas
@@ -111,8 +111,9 @@ const SistemaContable = ({ empresa, rol, onLogout }: { empresa: string; rol: 'ad
   const [pestana, setPestana] = useState<Pestana>(rol === 'vendedor' ? 'pedidos' : 'reportes');
   const [tasaGlobal, setTasaGlobal] = useState(36.50);
 
+  // CAMBIO 2: Usar createMergeableStore
   const store = useCreateStore(() =>
-    createStore().setTablesSchema({
+    createMergeableStore().setTablesSchema({
       cuentas: { codigo: { type: 'string' }, nombre: { type: 'string' }, tipo: { type: 'string' } },
       asientos: { fecha: { type: 'string' }, descripcion: { type: 'string' } },
       lineas: { asientoId: { type: 'string' }, cuentaId: { type: 'string' }, debe: { type: 'number' }, haber: { type: 'number' } },
@@ -158,14 +159,21 @@ const SistemaContable = ({ empresa, rol, onLogout }: { empresa: string; rol: 'ad
     else store.addRow('historial_tasas', { fecha: fechaHoy, tasa: nuevaTasa });
   };
 
+  // Persistencia local (para que no se borren los datos al cerrar)
   useCreatePersister(store, (s) => createLocalPersister(s, `mi-profit/${empresa}`), [empresa], async (p) => {
     await p.startAutoLoad();
     await p.startAutoSave();
   });
 
-  useCreatePersister(store, (s: any) => createWsSynchronizer(s, new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:8080/mi-profit-sync')), [], async (synchronizer: any) => {
-    await synchronizer.startSync();
-  });
+  // CAMBIO 3: Usar useCreateSynchronizer para conectar al WebSocket
+  useCreateSynchronizer(
+    store,
+    (s) => createWsSynchronizer(s, new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:8080/mi-profit-sync')),
+    [],
+    async (synchronizer) => {
+      await synchronizer.startSync();
+    }
+  );
 
   // --- VISTA PARA VENDEDORES ---
   if (rol === 'vendedor') {

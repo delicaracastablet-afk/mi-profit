@@ -36,7 +36,9 @@ export const NotasEntrega = ({ store, tasaGlobal }: { store: any, tasaGlobal: nu
     if (existe) {
       setCarrito(carrito.map(item => item.productoId === productoSeleccionado ? { ...item, cantidad: item.cantidad + cantidadSeleccionada } : item));
     } else {
-      setCarrito([...carrito, { productoId: productoSeleccionado, nombre: String(prod.nombre), precio: Number(prod.precio), cantidad: cantidadSeleccionada }]);
+      // AQUI NOS ASEGURAMOS DE CONVERTIR EL PRECIO A NUMERO
+      const precioNumerico = Number(prod.precio) || 0;
+      setCarrito([...carrito, { productoId: productoSeleccionado, nombre: String(prod.nombre), precio: precioNumerico, cantidad: cantidadSeleccionada }]);
     }
     setProductoSeleccionado(''); setCantidadSeleccionada(1);
   };
@@ -52,12 +54,12 @@ export const NotasEntrega = ({ store, tasaGlobal }: { store: any, tasaGlobal: nu
     store.addRow('notas_entrega', { fecha, rifCliente, nombreCliente, contenido: JSON.stringify(carrito), observaciones });
 
     carrito.forEach(item => {
-      const stockActual = Number(store.getCell('productos', item.productoId, 'stock'));
+      const stockActual = Number(store.getCell('productos', item.productoId, 'stock')) || 0;
       store.setCell('productos', item.productoId, 'stock', stockActual - item.cantidad);
     });
 
-    const textoProductos = carrito.map(item => `${item.cantidad}x ${item.nombre}`).join(', ');
-    generarNotaEntregaPDF(numeroNota, rifCliente, nombreCliente, fecha, textoProductos, totalUSD, tasaGlobal);
+    // ENVIAMOS EL CARRITO COMPLETO AL PDF, NO SOLO UN TEXTO
+    generarNotaEntregaPDF(numeroNota, rifCliente, nombreCliente, fecha, carrito, totalUSD, tasaGlobal);
 
     alert("Nota de Entrega generada. El stock ha sido descontado y el PDF se ha descargado.");
     setRifCliente(''); setNombreCliente(''); setCarrito([]); setObservaciones('');
@@ -95,7 +97,7 @@ export const NotasEntrega = ({ store, tasaGlobal }: { store: any, tasaGlobal: nu
           </div>
           <div style={{ flex: 2, minWidth: '200px' }}>
             <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>Cliente</label>
-            <select onChange={handleClienteChange} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}>
+            <select onChange={handleClienteChange} value={clientesIds.find(id => store.getCell('clientes', id, 'rif') === rifCliente) || ''} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}>
               <option value="">Seleccionar cliente...</option>
               {clientesIds.map((id: string) => {
                 const c = store.getRow('clientes', id);
@@ -136,8 +138,8 @@ export const NotasEntrega = ({ store, tasaGlobal }: { store: any, tasaGlobal: nu
                     <tr key={idx} style={{ borderBottom: '1px solid #333' }}>
                       <td style={{ padding: '5px' }}>{item.nombre}</td>
                       <td style={{ textAlign: 'center', padding: '5px' }}>{item.cantidad}</td>
-                      <td style={{ textAlign: 'right', padding: '5px' }}>${item.precio.toFixed(2)}</td>
-                      <td style={{ textAlign: 'right', padding: '5px' }}>${(item.precio * item.cantidad).toFixed(2)}</td>
+                      <td style={{ textAlign: 'right', padding: '5px' }}>${Number(item.precio).toFixed(2)}</td>
+                      <td style={{ textAlign: 'right', padding: '5px' }}>${(Number(item.precio) * item.cantidad).toFixed(2)}</td>
                       <td style={{ textAlign: 'center' }}><button onClick={() => eliminarDelCarrito(idx)} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer' }}>X</button></td>
                     </tr>
                   ))}
